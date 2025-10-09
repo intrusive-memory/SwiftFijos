@@ -14,7 +14,7 @@ Add SwiftFijos to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "path/to/SwiftFijos", from: "1.0.0")
+    .package(url: "https://github.com/stovak/SwiftFijos", from: "1.0.0")
 ]
 ```
 
