@@ -1,0 +1,28 @@
+[
+  {
+    "id" : "A6371954-6DB3-4B4F-9879-C0F515915550",
+    "index" : 0,
+    "isCollapsed" : false,
+    "level" : 1,
+    "range" : [
+      63,
+      22
+    ],
+    "rawString" : "INT. COFFEE SHOP - DAY",
+    "string" : "INT. COFFEE SHOP - DAY",
+    "type" : "sceneHeader"
+  },
+  {
+    "id" : "B8FDCAE9-FAAE-43C9-9D4C-4CE655806B61",
+    "index" : 1,
+    "isCollapsed" : false,
+    "level" : -1,
+    "range" : [
+      579,
+      0
+    ],
+    "rawString" : "",
+    "string" : "",
+    "type" : "blank"
+  }
+]

@@ -1,0 +1,62 @@
+{
+  "ALICE" : {
+    "color" : null,
+    "counts" : {
+      "lineCount" : 4,
+      "wordCount" : 20
+    },
+    "gender" : {
+      "unspecified" : {
+
+      }
+    },
+    "scenes" : [
+      1
+    ]
+  },
+  "BOB" : {
+    "color" : null,
+    "counts" : {
+      "lineCount" : 3,
+      "wordCount" : 13
+    },
+    "gender" : {
+      "unspecified" : {
+
+      }
+    },
+    "scenes" : [
+      1
+    ]
+  },
+  "CHARLIE" : {
+    "color" : null,
+    "counts" : {
+      "lineCount" : 3,
+      "wordCount" : 17
+    },
+    "gender" : {
+      "unspecified" : {
+
+      }
+    },
+    "scenes" : [
+      1
+    ]
+  },
+  "FADE OUT." : {
+    "color" : null,
+    "counts" : {
+      "lineCount" : 1,
+      "wordCount" : 0
+    },
+    "gender" : {
+      "unspecified" : {
+
+      }
+    },
+    "scenes" : [
+      1
+    ]
+  }
+}

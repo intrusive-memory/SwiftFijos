@@ -1,0 +1,11 @@
+Test Notes
+==========
+
+This is a simple text fixture file.
+
+Features:
+- Plain text format
+- Easy to read
+- Great for testing text parsing
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.

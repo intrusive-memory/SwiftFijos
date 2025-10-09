@@ -1,0 +1,30 @@
+[
+  {
+    "iconName" : "info.circle",
+    "id" : "159EF8E8-3185-4554-AC8F-886FC451009E",
+    "isActive" : true,
+    "name" : "Stats",
+    "position" : 0
+  },
+  {
+    "iconName" : "rectangle.grid.1x2",
+    "id" : "EB6BAF70-52A9-4DBE-8035-0F24C24A9053",
+    "isActive" : true,
+    "name" : "Shelf",
+    "position" : 1
+  },
+  {
+    "iconName" : "checkmark",
+    "id" : "A8557BF6-3337-4536-BC9C-EDFFDBA8A211",
+    "isActive" : true,
+    "name" : "Todos",
+    "position" : 2
+  },
+  {
+    "iconName" : "person.2",
+    "id" : "CA4A9CA3-A1A1-4F33-ADB3-503B03FBF2CE",
+    "isActive" : true,
+    "name" : "Characters",
+    "position" : 3
+  }
+]

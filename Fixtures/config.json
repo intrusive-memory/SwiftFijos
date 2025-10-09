@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "timeout": 30,
+  "retries": 3,
+  "endpoints": [
+    "https://api.example.com/v1",
+    "https://backup.example.com/v1"
+  ]
+}

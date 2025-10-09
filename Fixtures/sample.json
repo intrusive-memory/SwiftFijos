@@ -1,0 +1,14 @@
+{
+  "name": "Sample Fixture",
+  "version": "1.0",
+  "description": "A sample JSON fixture for testing",
+  "items": [
+    "item1",
+    "item2",
+    "item3"
+  ],
+  "metadata": {
+    "created": "2025-10-08",
+    "author": "Fijos"
+  }
+}
