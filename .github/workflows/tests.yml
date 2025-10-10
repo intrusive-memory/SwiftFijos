@@ -29,24 +29,32 @@ jobs:
 
       - name: Generate coverage report
         run: |
-          xcrun llvm-cov export -format="lcov" \
-            .build/debug/SwiftFijosPackageTests.xctest/Contents/MacOS/SwiftFijosPackageTests \
-            -instr-profile .build/debug/codecov/default.profdata > coverage.lcov
+          # Find the xcresult bundle
+          XCRESULT=$(find .build -name '*.xcresult' | head -n 1)
 
-      - name: Code Coverage Summary
-        uses: irongut/CodeCoverageSummary@v1.3.0
-        with:
-          filename: coverage.lcov
-          badge: true
-          format: markdown
-          output: both
+          if [ -z "$XCRESULT" ]; then
+            echo "No xcresult found, trying alternative approach..."
+            # Use llvm-cov with the correct paths for macOS
+            xcrun llvm-cov export -format="lcov" \
+              .build/debug/SwiftFijosPackageTests.xctest/Contents/MacOS/SwiftFijosPackageTests \
+              -instr-profile .build/debug/codecov/default.profdata > coverage.lcov
+          else
+            # Convert xccov report to lcov format
+            xcrun xccov view --report --json "$XCRESULT" > coverage.json
+
+            # Convert JSON to a simple text report for GitHub
+            echo "# Code Coverage Report" > coverage.md
+            echo "" >> coverage.md
+            xcrun xccov view --report "$XCRESULT" >> coverage.md
+          fi
 
       - name: Add Coverage PR Comment
         uses: marocchino/sticky-pull-request-comment@v2
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && hashFiles('coverage.md') != ''
         with:
           recreate: true
-          path: code-coverage-results.md
+          path: coverage.md
 
       - name: Write to Job Summary
-        run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
+        if: hashFiles('coverage.md') != ''
+        run: cat coverage.md >> $GITHUB_STEP_SUMMARY
