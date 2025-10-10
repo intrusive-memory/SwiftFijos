@@ -25,7 +25,15 @@ jobs:
         run: swift build
 
       - name: Run tests with coverage
-        run: swift test --enable-code-coverage
+        run: |
+          # Run tests and capture output
+          swift test --enable-code-coverage 2>&1 | tee test-output.log
+
+          # Capture exit code
+          TEST_EXIT_CODE=${PIPESTATUS[0]}
+
+          # Exit with the test exit code
+          exit $TEST_EXIT_CODE
 
       - name: Generate coverage report
         run: |
