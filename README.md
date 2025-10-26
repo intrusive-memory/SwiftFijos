@@ -1,6 +1,6 @@
 # SwiftFijos
 
-[![Tests](https://github.com/stovak/SwiftFijos/actions/workflows/tests.yml/badge.svg)](https://github.com/stovak/SwiftFijos/actions/workflows/tests.yml)
+[![Tests](https://github.com/intrusive-memory/SwiftFijos/actions/workflows/tests.yml/badge.svg)](https://github.com/intrusive-memory/SwiftFijos/actions/workflows/tests.yml)
 
 A lightweight Swift package for managing and discovering test fixtures in your Swift packages and projects.
 
@@ -14,7 +14,7 @@ Add SwiftFijos to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/stovak/SwiftFijos", from: "1.0.0")
+    .package(url: "https://github.com/intrusive-memory/SwiftFijos", from: "1.0.0")
 ]
 ```
 

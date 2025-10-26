@@ -32,15 +32,10 @@ public enum Fijos {
     /// Returns the Fixtures directory URL from the calling project's root.
     /// Searches upward from the test file location to find the project root.
     /// Priority order: Xcode project (.xcodeproj or .xcworkspace), then Package.swift
-    public static func getFixturesDirectory(from testFileURL: URL? = nil) throws -> URL {
-        let startURL: URL
-
-        if let testFileURL = testFileURL {
-            startURL = testFileURL
-        } else {
-            // Use the caller's file path
-            startURL = URL(fileURLWithPath: #filePath)
-        }
+    /// - Parameter testFilePath: The file path to start searching from. Defaults to the caller's file location.
+    public static func getFixturesDirectory(from testFilePath: String = #filePath) throws -> URL {
+        // Use the caller's file path (evaluated at call site, not definition site)
+        let startURL = URL(fileURLWithPath: testFilePath)
 
         // Navigate up from the test file to find the project root
         var currentURL = startURL.deletingLastPathComponent()
@@ -48,12 +43,8 @@ public enum Fijos {
         let maxSearchDepth = 10
 
         while searchDepth < maxSearchDepth {
-            let fixturesURL = currentURL.appendingPathComponent("Fixtures")
-
-            // Check if Fixtures directory exists at this level
-            var isDirectory: ObjCBool = false
-            if FileManager.default.fileExists(atPath: fixturesURL.path, isDirectory: &isDirectory),
-               isDirectory.boolValue {
+            // Check if Fixtures directory exists at this level (case-insensitive)
+            if let fixturesURL = findDirectory(named: "Fixtures", in: currentURL) {
                 // Verify this is a valid root by checking for project markers
                 if hasProjectRoot(at: currentURL) {
                     return fixturesURL
@@ -63,12 +54,11 @@ public enum Fijos {
             // Check if we've hit a project root marker
             if hasProjectRoot(at: currentURL) {
                 // We found a project root, check for Fixtures here
-                if FileManager.default.fileExists(atPath: fixturesURL.path, isDirectory: &isDirectory),
-                   isDirectory.boolValue {
+                if let fixturesURL = findDirectory(named: "Fixtures", in: currentURL) {
                     return fixturesURL
                 } else {
                     throw FijosError.fixturesDirectoryNotFound(
-                        "Fixtures directory not found at project root: \(fixturesURL.path). " +
+                        "Fixtures directory not found at project root: \(currentURL.path). " +
                         "Please create a 'Fixtures' directory at your project root."
                     )
                 }
@@ -82,6 +72,38 @@ public enum Fijos {
         throw FijosError.fixturesDirectoryNotFound(
             "Could not locate Fixtures directory or project root after searching \(maxSearchDepth) levels up from \(startURL.path)"
         )
+    }
+
+    /// Finds a directory with a case-insensitive name match in the given parent directory.
+    /// - Parameters:
+    ///   - name: The directory name to search for (case-insensitive)
+    ///   - parentURL: The parent directory to search in
+    /// - Returns: The URL of the matching directory, or nil if not found
+    private static func findDirectory(named name: String, in parentURL: URL) -> URL? {
+        let fileManager = FileManager.default
+
+        do {
+            let contents = try fileManager.contentsOfDirectory(
+                at: parentURL,
+                includingPropertiesForKeys: [.isDirectoryKey],
+                options: [.skipsHiddenFiles]
+            )
+
+            for item in contents {
+                // Check if it's a directory
+                if let resourceValues = try? item.resourceValues(forKeys: [.isDirectoryKey]),
+                   resourceValues.isDirectory == true {
+                    // Case-insensitive name comparison
+                    if item.lastPathComponent.lowercased() == name.lowercased() {
+                        return item
+                    }
+                }
+            }
+        } catch {
+            return nil
+        }
+
+        return nil
     }
 
     /// Checks if the given directory contains project root markers.
