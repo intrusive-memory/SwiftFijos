@@ -186,10 +186,21 @@ public enum Fijos {
     /// - Parameter testFilePath: The file path to start searching from. Defaults to the caller's file location.
     public static func getFixturesDirectory(from testFilePath: String = #filePath) throws -> URL {
         let env = ProcessInfo.processInfo.environment
+        let fileManager = FileManager.default
+
+        // Debug: Log the test file path to help diagnose issues
+        #if DEBUG
+        print("[SwiftFijos] getFixturesDirectory called with testFilePath: \(testFilePath)")
+        print("[SwiftFijos] CI_PRIMARY_REPOSITORY_PATH: \(env["CI_PRIMARY_REPOSITORY_PATH"] ?? "not set")")
+        print("[SwiftFijos] CI_WORKSPACE: \(env["CI_WORKSPACE"] ?? "not set")")
+        #endif
 
         // Try Xcode Cloud environment variables first (may be available in some test configurations)
         if let repoPath = env["CI_PRIMARY_REPOSITORY_PATH"], !repoPath.isEmpty {
             let repoURL = URL(fileURLWithPath: repoPath)
+            #if DEBUG
+            print("[SwiftFijos] Checking CI_PRIMARY_REPOSITORY_PATH: \(repoPath)")
+            #endif
             if let fixturesURL = findDirectory(named: "Fixtures", in: repoURL) {
                 return fixturesURL
             }
@@ -201,6 +212,9 @@ public enum Fijos {
         // Try CI_WORKSPACE as fallback for Xcode Cloud
         if let workspacePath = env["CI_WORKSPACE"], !workspacePath.isEmpty {
             let workspaceURL = URL(fileURLWithPath: workspacePath)
+            #if DEBUG
+            print("[SwiftFijos] Checking CI_WORKSPACE: \(workspacePath)")
+            #endif
             if let fixturesURL = findDirectory(named: "Fixtures", in: workspaceURL) {
                 return fixturesURL
             }
@@ -211,6 +225,9 @@ public enum Fijos {
 
         // Try other CI repository paths
         if let ciPath = ciRepositoryPath {
+            #if DEBUG
+            print("[SwiftFijos] Checking ciRepositoryPath: \(ciPath.path)")
+            #endif
             if let fixturesURL = findDirectory(named: "Fixtures", in: ciPath) {
                 return fixturesURL
             }
@@ -223,6 +240,15 @@ public enum Fijos {
         // Path pattern: /Volumes/workspace/repository/...
         if testFilePath.hasPrefix("/Volumes/workspace/repository/") {
             let repoPath = URL(fileURLWithPath: "/Volumes/workspace/repository")
+            #if DEBUG
+            print("[SwiftFijos] Detected Xcode Cloud path, checking: \(repoPath.path)")
+            let exists = fileManager.fileExists(atPath: repoPath.path)
+            print("[SwiftFijos] Path exists: \(exists)")
+            if exists {
+                let contents = try? fileManager.contentsOfDirectory(atPath: repoPath.path)
+                print("[SwiftFijos] Contents: \(contents ?? [])")
+            }
+            #endif
             if let fixturesURL = findDirectory(named: "Fixtures", in: repoPath) {
                 return fixturesURL
             }
