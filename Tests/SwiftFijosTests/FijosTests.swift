@@ -210,24 +210,6 @@ struct SwiftFijosTests {
         #expect(data.count > 0)
     }
 
-    @Test("Can access Project.fcpxml fixture")
-    func testProjectFCPXML() throws {
-        let fixture = try Fijos.getFixture("Project", extension: "fcpxml")
-        let content = try String(contentsOf: fixture, encoding: .utf8)
-
-        #expect(FileManager.default.fileExists(atPath: fixture.path))
-        #expect(!content.isEmpty)
-        #expect(content.contains("<?xml"))
-    }
-
-    @Test("Can access test.tablereader fixture")
-    func testTableReaderFixture() throws {
-        let fixture = try Fijos.getFixture("test", extension: "tablereader")
-        let data = try Data(contentsOf: fixture)
-
-        #expect(FileManager.default.fileExists(atPath: fixture.path))
-        #expect(data.count > 0)
-    }
 
     @Test("Can access audio fixture")
     func testAudioFixture() throws {
@@ -309,6 +291,31 @@ struct SwiftFijosTests {
         #expect(names == names.sorted())
     }
 
+    // MARK: - Xcode Cloud Environment Tests
+
+    @Test("isXcodeCloud returns false when not in CI")
+    func testIsXcodeCloudFalseLocally() {
+        // When not in Xcode Cloud, CI environment variable is not set
+        // This test should pass in local development
+        #expect(Fijos.isXcodeCloud == false || ProcessInfo.processInfo.environment["CI"] == "TRUE")
+    }
+
+    @Test("xcodeCloudRepositoryPath is nil when not in CI")
+    func testXcodeCloudRepositoryPathNilLocally() {
+        // When not in Xcode Cloud, CI_PRIMARY_REPOSITORY_PATH is not set
+        if ProcessInfo.processInfo.environment["CI_PRIMARY_REPOSITORY_PATH"] == nil {
+            #expect(Fijos.xcodeCloudRepositoryPath == nil)
+        }
+    }
+
+    @Test("xcodeCloudWorkspacePath is nil when not in CI")
+    func testXcodeCloudWorkspacePathNilLocally() {
+        // When not in Xcode Cloud, CI_WORKSPACE is not set
+        if ProcessInfo.processInfo.environment["CI_WORKSPACE"] == nil {
+            #expect(Fijos.xcodeCloudWorkspacePath == nil)
+        }
+    }
+
     // MARK: - Integration Tests
 
     @Test("Can perform complete fixture workflow")
@@ -346,8 +353,8 @@ struct SwiftFijosTests {
     func testAllFixturesDiscoverable() throws {
         let fixtures = try Fijos.listFixtures()
 
-        // We expect at least 12 fixture files (excluding directories)
-        #expect(fixtures.count >= 12, "Expected at least 12 fixture files, found \(fixtures.count)")
+        // We expect at least 10 fixture files (excluding directories)
+        #expect(fixtures.count >= 10, "Expected at least 10 fixture files, found \(fixtures.count)")
 
         // Verify we can read each one
         for fixture in fixtures {

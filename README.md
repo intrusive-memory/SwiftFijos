@@ -222,11 +222,59 @@ YourPackage/
 
 ## How It Works
 
-SwiftFijos automatically detects your project type:
+SwiftFijos automatically detects your environment and project type:
 
-1. **Xcode Projects (Priority)**: When included as a dependency in an Xcode project, it searches for `.xcodeproj` or `.xcworkspace` files to identify the project root, then looks for the `Fixtures` directory there.
+### Xcode Cloud Support
 
-2. **Swift Packages (Fallback)**: If no Xcode project is found, it searches for `Package.swift` to identify the package root, then looks for the `Fixtures` directory there.
+When running in Xcode Cloud, SwiftFijos uses environment variables to locate fixtures:
+
+1. **CI Detection**: Checks if `CI` environment variable is set to `"TRUE"`
+2. **Repository Path**: Uses `CI_PRIMARY_REPOSITORY_PATH` to find the repository root
+3. **Workspace Fallback**: Falls back to `CI_WORKSPACE` if needed
+4. **Recursive Search**: If no Fixtures folder is found at the root, performs a recursive directory search
+
+For complete Xcode Cloud environment variable documentation, see:
+[Apple Environment Variable Reference](https://developer.apple.com/documentation/xcode/environment-variable-reference)
+
+#### Key Xcode Cloud Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `CI` | Set to `"TRUE"` when running in Xcode Cloud |
+| `CI_PRIMARY_REPOSITORY_PATH` | Path to the cloned repository root |
+| `CI_WORKSPACE` | Path to the workspace directory |
+| `CI_XCODEBUILD_ACTION` | Current build action (e.g., "archive", "test") |
+| `CI_BRANCH` | Current branch being built |
+| `CI_COMMIT` | Current commit SHA |
+
+#### Public API for Xcode Cloud
+
+```swift
+// Check if running in Xcode Cloud
+if Fijos.isXcodeCloud {
+    print("Running in Xcode Cloud CI")
+}
+
+// Get repository path (nil when not in Xcode Cloud)
+if let repoPath = Fijos.xcodeCloudRepositoryPath {
+    print("Repository at: \(repoPath)")
+}
+
+// Get workspace path (nil when not in Xcode Cloud)
+if let workspacePath = Fijos.xcodeCloudWorkspacePath {
+    print("Workspace at: \(workspacePath)")
+}
+```
+
+### Local Development
+
+For local development, SwiftFijos automatically detects your project type:
+
+1. **Xcode Projects (Priority)**: Searches for `.xcodeproj` or `.xcworkspace` files to identify the project root, then looks for the `Fixtures` directory there.
+
+2. **Swift Packages (Fallback)**: If no Xcode project is found, searches for `Package.swift` to identify the package root, then looks for the `Fixtures` directory there.
+
+3. **Recursive Search (Last Resort)**: If no Fixtures folder is found at the project root, performs a recursive directory search from the project root.
 
 This means you always put your fixtures at your project root, regardless of how deep your test files are nested.
 

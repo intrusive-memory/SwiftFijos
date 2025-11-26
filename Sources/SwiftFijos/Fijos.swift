@@ -29,11 +29,51 @@ public enum Fijos {
         case fixturesDirectoryNotFound(String)
     }
 
+    // MARK: - Xcode Cloud Environment Detection
+    // Reference: https://developer.apple.com/documentation/xcode/environment-variable-reference
+
+    /// Checks if running in Xcode Cloud CI environment
+    public static var isXcodeCloud: Bool {
+        // CI is set to "TRUE" in Xcode Cloud environment
+        ProcessInfo.processInfo.environment["CI"] == "TRUE"
+    }
+
+    /// Returns the primary repository path when running in Xcode Cloud
+    /// This is the root directory where the source code is cloned
+    public static var xcodeCloudRepositoryPath: URL? {
+        guard let path = ProcessInfo.processInfo.environment["CI_PRIMARY_REPOSITORY_PATH"] else {
+            return nil
+        }
+        return URL(fileURLWithPath: path)
+    }
+
+    /// Returns the workspace path when running in Xcode Cloud
+    public static var xcodeCloudWorkspacePath: URL? {
+        guard let path = ProcessInfo.processInfo.environment["CI_WORKSPACE"] else {
+            return nil
+        }
+        return URL(fileURLWithPath: path)
+    }
+
     /// Returns the Fixtures directory URL from the calling project's root.
-    /// Searches upward from the test file location to find the project root.
-    /// Priority order: Xcode project (.xcodeproj or .xcworkspace), then Package.swift
+    ///
+    /// When running in Xcode Cloud, uses `CI_PRIMARY_REPOSITORY_PATH` to locate fixtures.
+    /// Otherwise, searches upward from the test file location to find the project root.
+    ///
+    /// Priority order:
+    /// 1. Xcode Cloud: Uses CI_PRIMARY_REPOSITORY_PATH/Fixtures
+    /// 2. Local: Xcode project (.xcodeproj or .xcworkspace), then Package.swift
+    ///
+    /// If no Fixtures directory is found at the expected location, performs a recursive
+    /// directory search from the repository root to find a Fixtures folder.
+    ///
     /// - Parameter testFilePath: The file path to start searching from. Defaults to the caller's file location.
     public static func getFixturesDirectory(from testFilePath: String = #filePath) throws -> URL {
+        // Check if running in Xcode Cloud
+        if isXcodeCloud {
+            return try getFixturesDirectoryInXcodeCloud()
+        }
+
         // Use the caller's file path (evaluated at call site, not definition site)
         let startURL = URL(fileURLWithPath: testFilePath)
 
@@ -57,6 +97,10 @@ public enum Fijos {
                 if let fixturesURL = findDirectory(named: "Fixtures", in: currentURL) {
                     return fixturesURL
                 } else {
+                    // Fallback: search recursively for Fixtures directory
+                    if let fixturesURL = searchForFixturesDirectory(from: currentURL) {
+                        return fixturesURL
+                    }
                     throw FijosError.fixturesDirectoryNotFound(
                         "Fixtures directory not found at project root: \(currentURL.path). " +
                         "Please create a 'Fixtures' directory at your project root."
@@ -72,6 +116,78 @@ public enum Fijos {
         throw FijosError.fixturesDirectoryNotFound(
             "Could not locate Fixtures directory or project root after searching \(maxSearchDepth) levels up from \(startURL.path)"
         )
+    }
+
+    /// Gets the Fixtures directory when running in Xcode Cloud CI environment
+    private static func getFixturesDirectoryInXcodeCloud() throws -> URL {
+        // Try CI_PRIMARY_REPOSITORY_PATH first (preferred)
+        if let repoPath = xcodeCloudRepositoryPath {
+            // First, check for Fixtures at repository root
+            if let fixturesURL = findDirectory(named: "Fixtures", in: repoPath) {
+                return fixturesURL
+            }
+
+            // Fallback: search recursively for Fixtures directory
+            if let fixturesURL = searchForFixturesDirectory(from: repoPath) {
+                return fixturesURL
+            }
+        }
+
+        // Try CI_WORKSPACE as fallback
+        if let workspacePath = xcodeCloudWorkspacePath {
+            if let fixturesURL = findDirectory(named: "Fixtures", in: workspacePath) {
+                return fixturesURL
+            }
+
+            // Fallback: search recursively for Fixtures directory
+            if let fixturesURL = searchForFixturesDirectory(from: workspacePath) {
+                return fixturesURL
+            }
+        }
+
+        throw FijosError.fixturesDirectoryNotFound(
+            "Fixtures directory not found in Xcode Cloud environment. " +
+            "CI_PRIMARY_REPOSITORY_PATH: \(ProcessInfo.processInfo.environment["CI_PRIMARY_REPOSITORY_PATH"] ?? "not set"), " +
+            "CI_WORKSPACE: \(ProcessInfo.processInfo.environment["CI_WORKSPACE"] ?? "not set")"
+        )
+    }
+
+    /// Recursively searches for a Fixtures directory starting from the given root URL
+    /// Uses FileManager.enumerator for efficient directory traversal
+    /// - Parameter rootURL: The root directory to start searching from
+    /// - Returns: The URL of the Fixtures directory if found, nil otherwise
+    private static func searchForFixturesDirectory(from rootURL: URL) -> URL? {
+        let fileManager = FileManager.default
+
+        guard let enumerator = fileManager.enumerator(
+            at: rootURL,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles, .skipsPackageDescendants],
+            errorHandler: { _, _ in true } // Continue on errors
+        ) else {
+            return nil
+        }
+
+        while let fileURL = enumerator.nextObject() as? URL {
+            // Check if it's a directory
+            guard let resourceValues = try? fileURL.resourceValues(forKeys: [.isDirectoryKey]),
+                  resourceValues.isDirectory == true else {
+                continue
+            }
+
+            // Case-insensitive check for "Fixtures" directory
+            if fileURL.lastPathComponent.lowercased() == "fixtures" {
+                return fileURL
+            }
+
+            // Skip deep traversal into certain directories
+            let skipDirectories = [".build", "DerivedData", "Pods", "Carthage", "node_modules", ".git"]
+            if skipDirectories.contains(fileURL.lastPathComponent) {
+                enumerator.skipDescendants()
+            }
+        }
+
+        return nil
     }
 
     /// Finds a directory with a case-insensitive name match in the given parent directory.
