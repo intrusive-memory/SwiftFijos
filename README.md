@@ -124,7 +124,7 @@ public struct Fixture: Identifiable, Equatable {
 
 #### Directory Access
 
-##### `getFixturesDirectory(from: URL? = nil) throws -> URL`
+##### `getFixturesDirectory(from testFilePath: String = #filePath) throws -> URL`
 Returns the URL of the `Fixtures` directory at your project root. Searches upward from the test file location to find the project root using the following priority:
 1. **Xcode projects**: Looks for `.xcodeproj` or `.xcworkspace` files (primary)
 2. **SPM packages**: Looks for `Package.swift` file (secondary fallback)
@@ -132,7 +132,7 @@ Returns the URL of the `Fixtures` directory at your project root. Searches upwar
 This ensures that when used as a package dependency in an Xcode project, it finds the Xcode project's Fixtures directory rather than the package's.
 
 **Parameters:**
-- `from`: Optional URL to start searching from (defaults to using `#filePath`)
+- `testFilePath`: The file path to start searching from (defaults to the caller's file location via `#filePath`)
 
 **Throws:** `FijosError.fixturesDirectoryNotFound` if the Fixtures directory doesn't exist.
 
