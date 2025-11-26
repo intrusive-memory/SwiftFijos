@@ -171,6 +171,9 @@ public enum Fijos {
     public static func getFixturesDirectory(from testFilePath: String = #filePath) throws -> URL {
         // Try CI repository path first (works across multiple CI systems)
         if let ciPath = ciRepositoryPath {
+            print("[SwiftFijos] Using CI repository path: \(ciPath.path)")
+            print("[SwiftFijos] Looking for Fixtures directory...")
+
             if let fixturesURL = findDirectory(named: "Fixtures", in: ciPath) {
                 return fixturesURL
             }
