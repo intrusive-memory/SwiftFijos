@@ -254,6 +254,21 @@ public enum Fijos {
         return false
     }
 
+    /// Returns the URL for a specific fixture file by filename only
+    /// - Parameter filename: The complete filename including extension (e.g., "test.fountain")
+    /// - Returns: URL to the fixture file
+    /// - Throws: FijosError if the fixture is not found
+    public static func getFixture(_ filename: String) throws -> URL {
+        let fixturesDirectory = try getFixturesDirectory()
+        let fixtureURL = fixturesDirectory.appendingPathComponent(filename)
+
+        guard FileManager.default.fileExists(atPath: fixtureURL.path) else {
+            throw FijosError.fixtureNotFound("Fixture \(filename) not found at \(fixtureURL.path)")
+        }
+
+        return fixtureURL
+    }
+
     /// Returns the URL for a specific fixture file
     public static func getFixture(_ name: String, extension ext: String) throws -> URL {
         let fixturesDirectory = try getFixturesDirectory()
