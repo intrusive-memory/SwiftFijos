@@ -185,13 +185,48 @@ public enum Fijos {
     ///
     /// - Parameter testFilePath: The file path to start searching from. Defaults to the caller's file location.
     public static func getFixturesDirectory(from testFilePath: String = #filePath) throws -> URL {
-        // Try CI repository path first (works across multiple CI systems)
+        let env = ProcessInfo.processInfo.environment
+
+        // Try Xcode Cloud environment variables first (may be available in some test configurations)
+        if let repoPath = env["CI_PRIMARY_REPOSITORY_PATH"], !repoPath.isEmpty {
+            let repoURL = URL(fileURLWithPath: repoPath)
+            if let fixturesURL = findDirectory(named: "Fixtures", in: repoURL) {
+                return fixturesURL
+            }
+            if let fixturesURL = searchForFixturesDirectory(from: repoURL) {
+                return fixturesURL
+            }
+        }
+
+        // Try CI_WORKSPACE as fallback for Xcode Cloud
+        if let workspacePath = env["CI_WORKSPACE"], !workspacePath.isEmpty {
+            let workspaceURL = URL(fileURLWithPath: workspacePath)
+            if let fixturesURL = findDirectory(named: "Fixtures", in: workspaceURL) {
+                return fixturesURL
+            }
+            if let fixturesURL = searchForFixturesDirectory(from: workspaceURL) {
+                return fixturesURL
+            }
+        }
+
+        // Try other CI repository paths
         if let ciPath = ciRepositoryPath {
             if let fixturesURL = findDirectory(named: "Fixtures", in: ciPath) {
                 return fixturesURL
             }
-            // Fallback: search recursively for Fixtures directory
             if let fixturesURL = searchForFixturesDirectory(from: ciPath) {
+                return fixturesURL
+            }
+        }
+
+        // Xcode Cloud detection from file path - extract repository root from test file path
+        // Path pattern: /Volumes/workspace/repository/...
+        if testFilePath.hasPrefix("/Volumes/workspace/repository/") {
+            let repoPath = URL(fileURLWithPath: "/Volumes/workspace/repository")
+            if let fixturesURL = findDirectory(named: "Fixtures", in: repoPath) {
+                return fixturesURL
+            }
+            if let fixturesURL = searchForFixturesDirectory(from: repoPath) {
                 return fixturesURL
             }
         }
