@@ -26,6 +26,7 @@
       "Bash(git remote:*)",
       "Bash(git show:*)",
       "Bash(git blame:*)",
+      "Bash(git -C:*)",
       "Bash(gh pr:*)",
       "Bash(gh issue:*)",
       "Bash(gh repo:*)",
