@@ -291,28 +291,44 @@ struct SwiftFijosTests {
         #expect(names == names.sorted())
     }
 
-    // MARK: - Xcode Cloud Environment Tests
+    // MARK: - CI Environment Tests
 
-    @Test("isXcodeCloud returns false when not in CI")
-    func testIsXcodeCloudFalseLocally() {
-        // When not in Xcode Cloud, CI environment variable is not set
-        // This test should pass in local development
-        #expect(Fijos.isXcodeCloud == false || ProcessInfo.processInfo.environment["CI"] == "TRUE")
+    @Test("isCI detects CI environment correctly")
+    func testIsCIDetection() {
+        let env = ProcessInfo.processInfo.environment
+        let expectedCI = env["CI"] == "TRUE" ||
+                        env["CI"] == "true" ||
+                        env["GITHUB_ACTIONS"] != nil ||
+                        env["CIRCLECI"] != nil ||
+                        env["JENKINS_HOME"] != nil ||
+                        env["BUILDKITE"] != nil ||
+                        env["TRAVIS"] != nil ||
+                        env["GITLAB_CI"] != nil
+
+        #expect(Fijos.isCI == expectedCI)
     }
 
-    @Test("xcodeCloudRepositoryPath is nil when not in CI")
-    func testXcodeCloudRepositoryPathNilLocally() {
-        // When not in Xcode Cloud, CI_PRIMARY_REPOSITORY_PATH is not set
-        if ProcessInfo.processInfo.environment["CI_PRIMARY_REPOSITORY_PATH"] == nil {
-            #expect(Fijos.xcodeCloudRepositoryPath == nil)
-        }
+    @Test("isRunningTests returns true during test execution")
+    func testIsRunningTestsDetection() {
+        // This test is running, so isRunningTests should be true
+        #expect(Fijos.isRunningTests == true)
     }
 
-    @Test("xcodeCloudWorkspacePath is nil when not in CI")
-    func testXcodeCloudWorkspacePathNilLocally() {
-        // When not in Xcode Cloud, CI_WORKSPACE is not set
-        if ProcessInfo.processInfo.environment["CI_WORKSPACE"] == nil {
-            #expect(Fijos.xcodeCloudWorkspacePath == nil)
+    @Test("ciRepositoryPath returns path when CI env vars are set")
+    func testCIRepositoryPath() {
+        let env = ProcessInfo.processInfo.environment
+        let hasAnyPath = env["CI_PRIMARY_REPOSITORY_PATH"] != nil ||
+                        env["GITHUB_WORKSPACE"] != nil ||
+                        env["CI_PROJECT_DIR"] != nil ||
+                        env["CIRCLE_WORKING_DIRECTORY"] != nil ||
+                        env["WORKSPACE"] != nil ||
+                        env["BUILDKITE_BUILD_CHECKOUT_PATH"] != nil ||
+                        env["TRAVIS_BUILD_DIR"] != nil
+
+        if hasAnyPath {
+            #expect(Fijos.ciRepositoryPath != nil)
+        } else {
+            #expect(Fijos.ciRepositoryPath == nil)
         }
     }
 

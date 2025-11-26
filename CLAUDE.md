@@ -17,7 +17,11 @@ swift test
 
 ## Fixture Discovery Priority
 
-1. **Xcode Cloud**: Uses `CI_PRIMARY_REPOSITORY_PATH`, then `CI_WORKSPACE`
-2. **Local Xcode Projects**: Searches for `.xcodeproj` or `.xcworkspace`
-3. **Swift Packages**: Searches for `Package.swift`
+1. **CI Systems**: Checks repository path env vars (GitHub Actions, GitLab CI, CircleCI, Jenkins, Buildkite, Travis CI)
+2. **`#filePath` Discovery**: Searches upward from test file to find project root
+3. **Project Root Detection**: Looks for `.xcodeproj`, `.xcworkspace`, or `Package.swift`
 4. **Fallback**: Recursive directory search
+
+## Note on Xcode Cloud
+
+Xcode Cloud environment variables (`CI`, `CI_PRIMARY_REPOSITORY_PATH`, `CI_WORKSPACE`) are only available during build scripts, NOT at test runtime. The library uses `#filePath` based discovery which works reliably in all environments.
