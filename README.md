@@ -138,40 +138,58 @@ This ensures that when used as a package dependency in an Xcode project, it find
 
 #### Single Fixture Retrieval
 
-##### `getFixture(_ name: String, extension: String) throws -> URL`
+##### `getFixture(_ name: String, extension: String, from: String = #filePath) throws -> URL`
 Returns the URL for a specific fixture file.
 
 **Parameters:**
 - `name`: The name of the fixture file (without extension)
 - `extension`: The file extension
+- `from`: The file path to start searching from (defaults to caller's location via `#filePath`)
+
+**Throws:** `FijosError.fixtureNotFound` if the fixture file doesn't exist.
+
+##### `getFixture(_ filename: String, from: String = #filePath) throws -> URL`
+Returns the URL for a specific fixture file by full filename.
+
+**Parameters:**
+- `filename`: The complete filename including extension (e.g., "test.json")
+- `from`: The file path to start searching from (defaults to caller's location via `#filePath`)
 
 **Throws:** `FijosError.fixtureNotFound` if the fixture file doesn't exist.
 
 #### Discovery Methods
 
-##### `listFixtures() throws -> [Fixture]`
+##### `listFixtures(from: String = #filePath) throws -> [Fixture]`
 Returns all fixtures in the Fixtures directory, sorted by name.
+
+**Parameters:**
+- `from`: The file path to start searching from (defaults to caller's location via `#filePath`)
 
 **Returns:** Array of `Fixture` objects representing all files in the Fixtures directory.
 
-##### `listFixtures(withExtension: String) throws -> [Fixture]`
+##### `listFixtures(withExtension: String, from: String = #filePath) throws -> [Fixture]`
 Returns all fixtures with a specific file extension.
 
 **Parameters:**
 - `withExtension`: File extension to filter by (case-insensitive, with or without leading dot)
+- `from`: The file path to start searching from (defaults to caller's location via `#filePath`)
 
 **Returns:** Array of matching `Fixture` objects.
 
-##### `findFixtures(matching: String) throws -> [Fixture]`
+##### `findFixtures(matching: String, from: String = #filePath) throws -> [Fixture]`
 Searches for fixtures whose names contain the specified pattern (case-insensitive).
 
 **Parameters:**
 - `matching`: Search pattern to match against fixture names
+- `from`: The file path to start searching from (defaults to caller's location via `#filePath`)
 
 **Returns:** Array of matching `Fixture` objects.
 
-##### `availableExtensions() throws -> [String]`
+##### `availableExtensions(from: String = #filePath) throws -> [String]`
 Returns all unique file extensions found in the Fixtures directory.
+
+**Parameters:**
+- `from`: The file path to start searching from (defaults to caller's location via `#filePath`)
 
 **Returns:** Sorted array of file extensions (lowercase, without dots).
 

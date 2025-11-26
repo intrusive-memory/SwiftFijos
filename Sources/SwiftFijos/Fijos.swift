@@ -171,9 +171,6 @@ public enum Fijos {
     public static func getFixturesDirectory(from testFilePath: String = #filePath) throws -> URL {
         // Try CI repository path first (works across multiple CI systems)
         if let ciPath = ciRepositoryPath {
-            print("[SwiftFijos] Using CI repository path: \(ciPath.path)")
-            print("[SwiftFijos] Looking for Fixtures directory...")
-
             if let fixturesURL = findDirectory(named: "Fixtures", in: ciPath) {
                 return fixturesURL
             }
@@ -330,11 +327,13 @@ public enum Fijos {
     }
 
     /// Returns the URL for a specific fixture file by filename only
-    /// - Parameter filename: The complete filename including extension (e.g., "test.fountain")
+    /// - Parameters:
+    ///   - filename: The complete filename including extension (e.g., "test.fountain")
+    ///   - testFilePath: The file path to start searching from. Defaults to the caller's file location.
     /// - Returns: URL to the fixture file
     /// - Throws: FijosError if the fixture is not found
-    public static func getFixture(_ filename: String) throws -> URL {
-        let fixturesDirectory = try getFixturesDirectory()
+    public static func getFixture(_ filename: String, from testFilePath: String = #filePath) throws -> URL {
+        let fixturesDirectory = try getFixturesDirectory(from: testFilePath)
         let fixtureURL = fixturesDirectory.appendingPathComponent(filename)
 
         guard FileManager.default.fileExists(atPath: fixtureURL.path) else {
@@ -345,8 +344,14 @@ public enum Fijos {
     }
 
     /// Returns the URL for a specific fixture file
-    public static func getFixture(_ name: String, extension ext: String) throws -> URL {
-        let fixturesDirectory = try getFixturesDirectory()
+    /// - Parameters:
+    ///   - name: The name of the fixture file (without extension)
+    ///   - ext: The file extension
+    ///   - testFilePath: The file path to start searching from. Defaults to the caller's file location.
+    /// - Returns: URL to the fixture file
+    /// - Throws: FijosError if the fixture is not found
+    public static func getFixture(_ name: String, extension ext: String, from testFilePath: String = #filePath) throws -> URL {
+        let fixturesDirectory = try getFixturesDirectory(from: testFilePath)
         let fixtureURL = fixturesDirectory.appendingPathComponent("\(name).\(ext)")
 
         guard FileManager.default.fileExists(atPath: fixtureURL.path) else {
@@ -357,8 +362,10 @@ public enum Fijos {
     }
 
     /// Lists all fixtures in the Fixtures directory
-    public static func listFixtures() throws -> [Fixture] {
-        let fixturesDirectory = try getFixturesDirectory()
+    /// - Parameter testFilePath: The file path to start searching from. Defaults to the caller's file location.
+    /// - Returns: Array of Fixture objects
+    public static func listFixtures(from testFilePath: String = #filePath) throws -> [Fixture] {
+        let fixturesDirectory = try getFixturesDirectory(from: testFilePath)
         let fileManager = FileManager.default
 
         let contents = try fileManager.contentsOfDirectory(
@@ -377,8 +384,12 @@ public enum Fijos {
     }
 
     /// Lists all fixtures with a specific file extension
-    public static func listFixtures(withExtension ext: String) throws -> [Fixture] {
-        let allFixtures = try listFixtures()
+    /// - Parameters:
+    ///   - ext: The file extension to filter by
+    ///   - testFilePath: The file path to start searching from. Defaults to the caller's file location.
+    /// - Returns: Array of matching Fixture objects
+    public static func listFixtures(withExtension ext: String, from testFilePath: String = #filePath) throws -> [Fixture] {
+        let allFixtures = try listFixtures(from: testFilePath)
         let normalizedExtension = ext.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
 
         return allFixtures.filter { fixture in
@@ -387,8 +398,12 @@ public enum Fijos {
     }
 
     /// Searches for fixtures matching a name pattern (case-insensitive)
-    public static func findFixtures(matching pattern: String) throws -> [Fixture] {
-        let allFixtures = try listFixtures()
+    /// - Parameters:
+    ///   - pattern: The pattern to search for in fixture names
+    ///   - testFilePath: The file path to start searching from. Defaults to the caller's file location.
+    /// - Returns: Array of matching Fixture objects
+    public static func findFixtures(matching pattern: String, from testFilePath: String = #filePath) throws -> [Fixture] {
+        let allFixtures = try listFixtures(from: testFilePath)
         let lowercasePattern = pattern.lowercased()
 
         return allFixtures.filter { fixture in
@@ -397,8 +412,10 @@ public enum Fijos {
     }
 
     /// Returns all unique file extensions found in the Fixtures directory
-    public static func availableExtensions() throws -> [String] {
-        let fixtures = try listFixtures()
+    /// - Parameter testFilePath: The file path to start searching from. Defaults to the caller's file location.
+    /// - Returns: Sorted array of file extensions
+    public static func availableExtensions(from testFilePath: String = #filePath) throws -> [String] {
+        let fixtures = try listFixtures(from: testFilePath)
         let extensions = Set(fixtures.map { $0.fileExtension.lowercased() })
         return Array(extensions).sorted()
     }
