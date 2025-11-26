@@ -134,6 +134,8 @@ public enum Fijos {
     /// - Jenkins: `WORKSPACE`
     /// - Buildkite: `BUILDKITE_BUILD_CHECKOUT_PATH`
     /// - Travis CI: `TRAVIS_BUILD_DIR`
+    ///
+    /// Also checks for standard Xcode Cloud paths when env vars aren't available at test runtime.
     public static var ciRepositoryPath: URL? {
         let env = ProcessInfo.processInfo.environment
         let pathVars = [
@@ -151,6 +153,20 @@ public enum Fijos {
                 return URL(fileURLWithPath: path)
             }
         }
+
+        // Xcode Cloud standard paths (env vars may not be available at test runtime)
+        // Check if we're running in a standard Xcode Cloud directory structure
+        let xcodeCloudPaths = [
+            "/Volumes/workspace/repository",
+            "/Volumes/workspace"
+        ]
+        let fileManager = FileManager.default
+        for path in xcodeCloudPaths {
+            if fileManager.fileExists(atPath: path) {
+                return URL(fileURLWithPath: path)
+            }
+        }
+
         return nil
     }
 
@@ -187,13 +203,18 @@ public enum Fijos {
         var currentURL = startURL.deletingLastPathComponent()
         var searchDepth = 0
         let maxSearchDepth = 10
+        var firstFixturesFound: URL? = nil
 
         while searchDepth < maxSearchDepth {
             // Check if Fixtures directory exists at this level (case-insensitive)
             if let fixturesURL = findDirectory(named: "Fixtures", in: currentURL) {
-                // Verify this is a valid root by checking for project markers
+                // If we find a Fixtures directory at a project root, return it immediately
                 if hasProjectRoot(at: currentURL) {
                     return fixturesURL
+                }
+                // Otherwise, remember the first Fixtures we found as a fallback
+                if firstFixturesFound == nil {
+                    firstFixturesFound = fixturesURL
                 }
             }
 
@@ -207,6 +228,10 @@ public enum Fijos {
                     if let fixturesURL = searchForFixturesDirectory(from: currentURL) {
                         return fixturesURL
                     }
+                    // If we found a Fixtures directory earlier (before hitting project root), use it
+                    if let fallback = firstFixturesFound {
+                        return fallback
+                    }
                     throw FijosError.fixturesDirectoryNotFound(
                         "Fixtures directory not found at project root: \(currentURL.path). " +
                         "Please create a 'Fixtures' directory at your project root."
@@ -217,6 +242,19 @@ public enum Fijos {
             // Move up one directory
             currentURL = currentURL.deletingLastPathComponent()
             searchDepth += 1
+        }
+
+        // If we exhausted the search depth but found a Fixtures directory along the way, use it
+        if let fallback = firstFixturesFound {
+            return fallback
+        }
+
+        // Last resort: try recursive search from the deepest point we reached
+        let searchRoot = URL(fileURLWithPath: testFilePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent() // Start from parent of test file's directory
+        if let fixturesURL = searchForFixturesDirectory(from: searchRoot) {
+            return fixturesURL
         }
 
         throw FijosError.fixturesDirectoryNotFound(
