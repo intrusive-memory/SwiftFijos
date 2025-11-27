@@ -35,7 +35,7 @@ struct SwiftFijosTests {
 
     @Test("Throws error for non-existent fixture")
     func testNonExistentFixture() {
-        #expect(throws: Fijos.FijosError.self) {
+        #expect(throws: FijosError.self) {
             _ = try Fijos.getFixture("nonexistent", extension: "xyz")
         }
     }

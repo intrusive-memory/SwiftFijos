@@ -1,5 +1,24 @@
 import Foundation
 
+/// Represents a fixture file with its metadata.
+public struct Fixture: Identifiable, Equatable {
+    /// Unique identifier combining name and extension (e.g., "sample.json")
+    public let id: String
+    /// The file name without extension
+    public let name: String
+    /// The file extension without the leading dot
+    public let fileExtension: String
+    /// The full URL to the fixture file
+    public let url: URL
+
+    public init(url: URL) {
+        self.url = url
+        self.fileExtension = url.pathExtension
+        self.name = url.deletingPathExtension().lastPathComponent
+        self.id = "\(name).\(fileExtension)"
+    }
+}
+
 public enum FijosError: Error, LocalizedError {
     case fixturesDirectoryNotFound(String)
     case fixtureNotFound(String)
@@ -35,10 +54,10 @@ public class Fijos {
     /// 2.  **Bundle Search:** It looks for a "Fixtures" directory inside the resources of all accessible bundles. This is the preferred method for tests running from a bundle (e.g., in Xcode or Xcode Cloud). For this to work, you must add the "Fixtures" folder to your test target's "Copy Bundle Resources" build phase.
     /// 3.  **File System Traversal (Fallback):** As a fallback for local development, it traverses up the directory tree from the source file's location (`#file`) to find the "Fixtures" directory.
     ///
-    /// - Parameter from: The file path to start searching from for the fallback strategy. Defaults to `#file`.
+    /// - Parameter from: The file path to start searching from for the fallback strategy. Defaults to `#filePath`.
     /// - Returns: A `URL` pointing to the "Fixtures" directory.
     /// - Throws: `FijosError.fixturesDirectoryNotFound` if the directory cannot be located using any of the strategies.
-    public static func getFixturesDirectory(from path: String = #file) throws -> URL {
+    public static func getFixturesDirectory(from path: String = #filePath) throws -> URL {
         // 1. CI Environment Variable (Xcode Cloud)
         if let repoPath = ProcessInfo.processInfo.environment["CI_PRIMARY_REPOSITORY_PATH"] {
             let fixturesURL = URL(fileURLWithPath: repoPath).appendingPathComponent("Fixtures")
@@ -83,10 +102,10 @@ public class Fijos {
     ///
     /// - Parameters:
     ///   - named: The name of the fixture file (e.g., "document.json").
-    ///   - from: The file path to start the search for the "Fixtures" directory. Defaults to `#file`.
+    ///   - from: The file path to start the search for the "Fixtures" directory. Defaults to `#filePath`.
     /// - Returns: The `URL` of the found fixture file.
     /// - Throws: `FijosError.fixtureNotFound` if the file doesn't exist in the "Fixtures" directory.
-    public static func getFixture(_ named: String, from path: String = #file) throws -> URL {
+    public static func getFixture(_ named: String, from path: String = #filePath) throws -> URL {
         let fixturesURL = try getFixturesDirectory(from: path)
         let fileURL = fixturesURL.appendingPathComponent(named)
 
@@ -95,5 +114,131 @@ public class Fijos {
         } else {
             throw FijosError.fixtureNotFound("Fixture '\(named)' not found in \(fixturesURL.path)")
         }
+    }
+
+    /// Provides a URL for a fixture file with separate name and extension.
+    ///
+    /// - Parameters:
+    ///   - name: The name of the fixture file without extension (e.g., "document").
+    ///   - extension: The file extension without the leading dot (e.g., "json").
+    ///   - from: The file path to start the search for the "Fixtures" directory. Defaults to `#filePath`.
+    /// - Returns: The `URL` of the found fixture file.
+    /// - Throws: `FijosError.fixtureNotFound` if the file doesn't exist in the "Fixtures" directory.
+    public static func getFixture(_ name: String, extension ext: String, from path: String = #filePath) throws -> URL {
+        let filename = "\(name).\(ext)"
+        return try getFixture(filename, from: path)
+    }
+
+    /// Lists all fixture files in the Fixtures directory.
+    ///
+    /// - Parameter from: The file path to start the search for the "Fixtures" directory. Defaults to `#filePath`.
+    /// - Returns: An array of `Fixture` objects sorted by name.
+    /// - Throws: `FijosError.fixturesDirectoryNotFound` if the Fixtures directory cannot be located.
+    public static func listFixtures(from path: String = #filePath) throws -> [Fixture] {
+        let fixturesURL = try getFixturesDirectory(from: path)
+        let contents = try FileManager.default.contentsOfDirectory(
+            at: fixturesURL,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        )
+
+        return contents
+            .filter { url in
+                var isDirectory: ObjCBool = false
+                FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
+                return !isDirectory.boolValue
+            }
+            .map { Fixture(url: $0) }
+            .sorted { $0.name < $1.name }
+    }
+
+    /// Lists fixture files filtered by extension.
+    ///
+    /// - Parameters:
+    ///   - extension: The file extension to filter by (with or without leading dot).
+    ///   - from: The file path to start the search for the "Fixtures" directory. Defaults to `#filePath`.
+    /// - Returns: An array of `Fixture` objects with the specified extension, sorted by name.
+    /// - Throws: `FijosError.fixturesDirectoryNotFound` if the Fixtures directory cannot be located.
+    public static func listFixtures(withExtension ext: String, from path: String = #filePath) throws -> [Fixture] {
+        let normalizedExt = ext.hasPrefix(".") ? String(ext.dropFirst()) : ext
+        return try listFixtures(from: path).filter {
+            $0.fileExtension.lowercased() == normalizedExt.lowercased()
+        }
+    }
+
+    /// Finds fixtures matching a name pattern (case-insensitive).
+    ///
+    /// - Parameters:
+    ///   - pattern: The pattern to search for in fixture names.
+    ///   - from: The file path to start the search for the "Fixtures" directory. Defaults to `#filePath`.
+    /// - Returns: An array of `Fixture` objects whose names contain the pattern, sorted by name.
+    /// - Throws: `FijosError.fixturesDirectoryNotFound` if the Fixtures directory cannot be located.
+    public static func findFixtures(matching pattern: String, from path: String = #filePath) throws -> [Fixture] {
+        let lowercasedPattern = pattern.lowercased()
+        return try listFixtures(from: path).filter {
+            $0.name.lowercased().contains(lowercasedPattern)
+        }
+    }
+
+    /// Returns all unique file extensions present in the Fixtures directory, sorted alphabetically.
+    ///
+    /// - Parameter from: The file path to start the search for the "Fixtures" directory. Defaults to `#filePath`.
+    /// - Returns: A sorted array of unique file extensions (without leading dots).
+    /// - Throws: `FijosError.fixturesDirectoryNotFound` if the Fixtures directory cannot be located.
+    public static func availableExtensions(from path: String = #filePath) throws -> [String] {
+        let fixtures = try listFixtures(from: path)
+        let extensions = Set(fixtures.map { $0.fileExtension.lowercased() })
+        return extensions.sorted()
+    }
+
+    // MARK: - CI Environment Detection
+
+    /// Indicates whether the code is running in a CI environment.
+    public static var isCI: Bool {
+        let env = ProcessInfo.processInfo.environment
+        return env["CI"] == "TRUE" ||
+               env["CI"] == "true" ||
+               env["GITHUB_ACTIONS"] != nil ||
+               env["CIRCLECI"] != nil ||
+               env["JENKINS_HOME"] != nil ||
+               env["BUILDKITE"] != nil ||
+               env["TRAVIS"] != nil ||
+               env["GITLAB_CI"] != nil
+    }
+
+    /// Indicates whether tests are currently running.
+    public static var isRunningTests: Bool {
+        // XCTest detection
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+            return true
+        }
+        if NSClassFromString("XCTestCase") != nil {
+            return true
+        }
+        // Swift Testing framework detection
+        if NSClassFromString("Testing.Test") != nil {
+            return true
+        }
+        // Check for test bundles
+        if Bundle.allBundles.contains(where: { $0.bundlePath.hasSuffix(".xctest") }) {
+            return true
+        }
+        // Check for swift-testing runner
+        if ProcessInfo.processInfo.arguments.contains(where: { $0.contains("swift-testing") || $0.contains("xctest") }) {
+            return true
+        }
+        return false
+    }
+
+    /// Returns the CI repository path if running in a CI environment, nil otherwise.
+    public static var ciRepositoryPath: String? {
+        let env = ProcessInfo.processInfo.environment
+        return env["CI_PRIMARY_REPOSITORY_PATH"] ??
+               env["GITHUB_WORKSPACE"] ??
+               env["CI_PROJECT_DIR"] ??
+               env["CIRCLE_WORKING_DIRECTORY"] ??
+               env["WORKSPACE"] ??
+               env["BUILDKITE_BUILD_CHECKOUT_PATH"] ??
+               env["TRAVIS_BUILD_DIR"]
     }
 }
