@@ -267,8 +267,8 @@ struct SwiftFijosTests {
         let fixtures = try Fijos.listFixtures()
 
         for fixture in fixtures {
-            let expectedID = "\(fixture.name).\(fixture.fileExtension)"
-            #expect(fixture.id == expectedID)
+            // ID should be the full filename from lastPathComponent
+            #expect(fixture.id == fixture.url.lastPathComponent)
         }
     }
 

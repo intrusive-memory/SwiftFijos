@@ -2,20 +2,20 @@ import Foundation
 
 /// Represents a fixture file with its metadata.
 public struct Fixture: Identifiable, Equatable {
-    /// Unique identifier combining name and extension (e.g., "sample.json")
+    /// Unique identifier - the full filename (e.g., "sample.json" or "README")
     public let id: String
     /// The file name without extension
     public let name: String
-    /// The file extension without the leading dot
+    /// The file extension without the leading dot (empty string if no extension)
     public let fileExtension: String
     /// The full URL to the fixture file
     public let url: URL
 
     public init(url: URL) {
         self.url = url
+        self.id = url.lastPathComponent
         self.fileExtension = url.pathExtension
         self.name = url.deletingPathExtension().lastPathComponent
-        self.id = "\(name).\(fileExtension)"
     }
 }
 
@@ -134,6 +134,7 @@ public class Fijos {
     /// - Parameter from: The file path to start the search for the "Fixtures" directory. Defaults to `#filePath`.
     /// - Returns: An array of `Fixture` objects sorted by name.
     /// - Throws: `FijosError.fixturesDirectoryNotFound` if the Fixtures directory cannot be located.
+    /// - Note: Symbolic links are excluded; only regular files are returned.
     public static func listFixtures(from path: String = #filePath) throws -> [Fixture] {
         let fixturesURL = try getFixturesDirectory(from: path)
         let contents = try FileManager.default.contentsOfDirectory(
@@ -143,12 +144,13 @@ public class Fijos {
         )
 
         return contents
-            .filter { url in
-                var isDirectory: ObjCBool = false
-                FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
-                return !isDirectory.boolValue
+            .compactMap { url -> Fixture? in
+                guard let resourceValues = try? url.resourceValues(forKeys: [.isRegularFileKey]),
+                      resourceValues.isRegularFile == true else {
+                    return nil
+                }
+                return Fixture(url: url)
             }
-            .map { Fixture(url: $0) }
             .sorted { $0.name < $1.name }
     }
 
