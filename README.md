@@ -29,6 +29,8 @@ Then add it as a dependency to your test target:
 2. Add your fixture files to this directory
 3. Import `SwiftFijos` in your test files
 
+### Basic Fixture Access
+
 ```swift
 import Testing
 import SwiftFijos
@@ -44,6 +46,68 @@ import SwiftFijos
     let jsonFixtures = try Fijos.listFixtures(withExtension: "json")
     let matching = try Fijos.findFixtures(matching: "sample")
     let extensions = try Fijos.availableExtensions()
+}
+```
+
+### Thread-Safe Access (Swift Testing)
+
+When using **Swift Testing** with parallel test execution, use `FixtureManager` to coordinate fixture access and prevent conflicts:
+
+```swift
+import Testing
+import SwiftFijos
+
+@Test func importDocument() async throws {
+    // Automatically waits if another test is using this fixture
+    let document = try await FixtureManager.shared.withExclusiveAccess(
+        to: "test.json"
+    ) { url in
+        let data = try Data(contentsOf: url)
+        return try JSONDecoder().decode(Document.self, from: data)
+    }
+
+    #expect(document != nil)
+}
+```
+
+#### Security-Scoped Resources (macOS)
+
+For tests that need security-scoped resource access:
+
+```swift
+@Test func importScreenplay() async throws {
+    let document = try await FixtureManager.shared.withSecurityScope(
+        fixture: "test.fountain"
+    ) { url in
+        // url has security-scoped access started
+        return try await DocumentImportService.importDocument(from: url)
+        // access automatically stopped after block
+    }
+
+    #expect(document.elements.count > 0)
+}
+```
+
+#### Preloading Fixtures
+
+For better test performance, preload fixtures once at test suite startup:
+
+```swift
+@Suite(.serialized)
+@MainActor
+struct MyTests {
+    init() async throws {
+        // Preload all fixtures into cache
+        try await FixtureManager.shared.preloadAllFixtures()
+    }
+
+    @Test func test1() async throws {
+        // Fixture already cached, instant access
+        let url = try await FixtureManager.shared.withExclusiveAccess(
+            to: "test.json"
+        ) { $0 }
+        // ...
+    }
 }
 ```
 
@@ -71,6 +135,22 @@ public struct Fixture: Identifiable, Equatable {
 | `listFixtures(withExtension:from:)` | Filter fixtures by extension |
 | `findFixtures(matching:from:)` | Search fixtures by name pattern |
 | `availableExtensions(from:)` | List all unique extensions |
+
+### FixtureManager Methods
+
+| Method | Description |
+|--------|-------------|
+| `withExclusiveAccess(to:from:perform:)` | Access fixture with exclusive lock (waits if locked) |
+| `withSecurityScope(fixture:from:perform:)` | Access fixture with security-scoped resource handling (macOS) |
+| `isLocked(_:)` | Check if a fixture is currently locked |
+| `releaseAllLocks()` | Release all locks (for cleanup) |
+| `clearCache()` | Clear the fixture URL cache |
+| `preloadFixtures(_:from:)` | Preload specific fixtures into cache |
+| `preloadAllFixtures(from:)` | Preload all fixtures into cache |
+| `getAccessCount(for:)` | Get access count for a fixture |
+| `getAllAccessCounts()` | Get all access counts |
+| `printAccessReport()` | Print formatted statistics report |
+| `resetStatistics()` | Reset all access statistics |
 
 ### CI Detection
 
