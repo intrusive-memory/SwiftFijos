@@ -81,14 +81,14 @@ jobs:
         run: |
           xcodebuild build-for-testing \
             -scheme SwiftFijos \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' \
             -enableCodeCoverage YES
 
       - name: Run iOS Simulator tests
         run: |
           xcodebuild test-without-building \
             -scheme SwiftFijos \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' \
             -enableCodeCoverage YES \
             -resultBundlePath TestResults.xcresult \
             2>&1 | tee test-output-ios.log
