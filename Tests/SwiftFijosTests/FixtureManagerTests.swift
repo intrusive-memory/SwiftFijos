@@ -31,9 +31,11 @@ struct FixtureManagerTests {
 
     @Test("Access non-existent fixture throws error")
     func accessNonExistentFixture() async throws {
+        let nonexistentFixture = "nonexistent-file-12345.json"
+
         do {
             _ = try await FixtureManager.shared.withExclusiveAccess(
-                to: "nonexistent-file-12345.json"
+                to: nonexistentFixture
             ) { url in
                 return url
             }
@@ -44,6 +46,10 @@ struct FixtureManagerTests {
         } catch {
             Issue.record("Expected FijosError, got: \(error)")
         }
+
+        // CRITICAL: Verify lock was released even though cachedURL threw
+        let isStillLocked = await FixtureManager.shared.isLocked(nonexistentFixture)
+        #expect(!isStillLocked, "Lock should be released even when fixture not found")
     }
 
     @Test("Cache is used on second access")
@@ -91,14 +97,16 @@ struct FixtureManagerTests {
 
     @Test("Lock is released after successful operation")
     func lockReleasedAfterSuccess() async throws {
+        let testFixture = "data.xml"
+
         _ = try await FixtureManager.shared.withExclusiveAccess(
-            to: "sample.json"
+            to: testFixture
         ) { url in
             return url
         }
 
         // Lock should be released
-        let isLocked = await FixtureManager.shared.isLocked("sample.json")
+        let isLocked = await FixtureManager.shared.isLocked(testFixture)
         #expect(!isLocked)
     }
 
@@ -274,18 +282,26 @@ struct FixtureManagerTests {
 
     @Test("Reset statistics clears all data")
     func resetStatisticsClearsData() async throws {
-        // Access fixture
+        // Use config.json which is rarely accessed
+        let testFixture = "config.json"
+
+        // Access fixture to increment its count
         _ = try await FixtureManager.shared.withExclusiveAccess(
-            to: "sample.json"
+            to: testFixture
         ) { url in
             return url
         }
 
+        // Verify count is non-zero
+        let countBefore = await FixtureManager.shared.getAccessCount(for: testFixture)
+        #expect(countBefore > 0)
+
         // Reset
         await FixtureManager.shared.resetStatistics()
 
-        let counts = await FixtureManager.shared.getAllAccessCounts()
-        #expect(counts.isEmpty)
+        // Verify count is now zero
+        let countAfter = await FixtureManager.shared.getAccessCount(for: testFixture)
+        #expect(countAfter == 0)
     }
 
     // MARK: - Release All Locks Tests

@@ -242,6 +242,12 @@ public actor FixtureManager {
     ///
     /// Useful for debugging parallel test execution and identifying bottlenecks.
     public func printAccessReport() {
+        // Column width constants for formatting
+        let fixtureColumnWidth = 40
+        let accessesColumnWidth = 10
+        let ellipsisSuffix = "..."
+        let maxFixtureNameLength = fixtureColumnWidth - ellipsisSuffix.count
+
         let sorted = accessCounts.sorted { $0.value > $1.value }
 
         guard !sorted.isEmpty else {
@@ -251,15 +257,15 @@ public actor FixtureManager {
 
         print("📊 Fixture Access Report:")
         print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        print(String(format: "%-40s %10s", "Fixture", "Accesses"))
+        print(String(format: "%-\(fixtureColumnWidth)s %\(accessesColumnWidth)s", "Fixture", "Accesses"))
         print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
         for (fixture, count) in sorted {
-            let fixtureName = fixture.count > 40
-                ? String(fixture.prefix(37)) + "..."
+            let fixtureName = fixture.count > fixtureColumnWidth
+                ? String(fixture.prefix(maxFixtureNameLength)) + ellipsisSuffix
                 : fixture
 
-            print(String(format: "%-40s %10d", fixtureName, count))
+            print(String(format: "%-\(fixtureColumnWidth)s %\(accessesColumnWidth)d", fixtureName, count))
         }
 
         print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
