@@ -78,6 +78,7 @@ public actor FixtureManager {
     ) async throws -> T {
         // Wait for exclusive access
         await waitForLock(on: fixture)
+        defer { releaseLock(on: fixture) }
 
         // Update access count
         accessCounts[fixture, default: 0] += 1
@@ -85,15 +86,8 @@ public actor FixtureManager {
         // Get fixture URL (cached or fresh)
         let url = try cachedURL(for: fixture, from: path)
 
-        do {
-            // Perform operation with lock held
-            let result = try await operation(url)
-            releaseLock(on: fixture)
-            return result
-        } catch {
-            releaseLock(on: fixture)
-            throw error
-        }
+        // Perform operation with lock held
+        return try await operation(url)
     }
 
     /// Access fixture with security-scoped resource handling (macOS only).
@@ -125,6 +119,7 @@ public actor FixtureManager {
     ) async throws -> T {
         // Wait for exclusive access
         await waitForLock(on: fixture)
+        defer { releaseLock(on: fixture) }
 
         // Update access count
         accessCounts[fixture, default: 0] += 1
@@ -142,15 +137,8 @@ public actor FixtureManager {
         }
         #endif
 
-        do {
-            // Perform operation with lock held
-            let result = try await operation(url)
-            releaseLock(on: fixture)
-            return result
-        } catch {
-            releaseLock(on: fixture)
-            throw error
-        }
+        // Perform operation with lock held
+        return try await operation(url)
     }
 
     /// Check if a fixture is currently locked by another test.

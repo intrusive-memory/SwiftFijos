@@ -240,20 +240,23 @@ struct FixtureManagerTests {
 
     @Test("Access statistics are tracked")
     func accessStatisticsTracked() async throws {
-        // Reset stats
-        await FixtureManager.shared.resetStatistics()
+        // Use notes.txt which is not used by other tests
+        let testFixture = "notes.txt"
 
-        // Access fixture multiple times
+        // Get initial count (should be 0 since no other test uses this)
+        let initialCount = await FixtureManager.shared.getAccessCount(for: testFixture)
+
+        // Access fixture 3 times
         for _ in 0..<3 {
             _ = try await FixtureManager.shared.withExclusiveAccess(
-                to: "sample.json"
+                to: testFixture
             ) { url in
                 return url
             }
         }
 
-        let count = await FixtureManager.shared.getAccessCount(for: "sample.json")
-        #expect(count == 3)
+        let finalCount = await FixtureManager.shared.getAccessCount(for: testFixture)
+        #expect(finalCount == initialCount + 3)
     }
 
     @Test("Statistics report prints without error")
