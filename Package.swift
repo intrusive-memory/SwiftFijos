@@ -4,10 +4,10 @@ import PackageDescription
 let package = Package(
     name: "SwiftFijos",
     platforms: [
-        .macOS(.v10_15),
-        .iOS(.v13),
-        .tvOS(.v13),
-        .watchOS(.v6)
+        .macOS(.v26),
+        .iOS(.v26),
+        .tvOS(.v26),
+        .watchOS(.v26)
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -20,11 +20,18 @@ let package = Package(
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "SwiftFijos"
+            name: "SwiftFijos",
+            swiftSettings: [
+                .enableUpcomingFeature("StrictConcurrency"),
+            ]
         ),
         .testTarget(
             name: "SwiftFijosTests",
-            dependencies: ["SwiftFijos"]
+            dependencies: ["SwiftFijos"],
+            swiftSettings: [
+                .enableUpcomingFeature("StrictConcurrency"),
+            ]
         ),
-    ]
+    ],
+    swiftLanguageModes: [.v6]
 )
