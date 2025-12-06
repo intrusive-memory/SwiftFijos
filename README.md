@@ -4,6 +4,11 @@
 
 A lightweight Swift package for managing and discovering test fixtures.
 
+## Requirements
+
+- Swift 6.2+
+- macOS 26.0+ / iOS 26.0+
+
 ## Installation
 
 Add SwiftFijos to your `Package.swift`:
