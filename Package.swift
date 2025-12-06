@@ -5,9 +5,7 @@ let package = Package(
     name: "SwiftFijos",
     platforms: [
         .macOS(.v26),
-        .iOS(.v26),
-        .tvOS(.v26),
-        .watchOS(.v26)
+        .iOS(.v26)
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
