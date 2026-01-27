@@ -1,8 +1,17 @@
 # SwiftFijos
 
+<p align="center">
+    <img src="icon.jpg" alt="SwiftFijos" width="200" />
+</p>
+
 [![Tests](https://github.com/intrusive-memory/SwiftFijos/actions/workflows/tests.yml/badge.svg)](https://github.com/intrusive-memory/SwiftFijos/actions/workflows/tests.yml)
 
 A lightweight Swift package for managing and discovering test fixtures.
+
+## Requirements
+
+- Swift 6.2+
+- macOS 26.0+ / iOS 26.0+
 
 ## Installation
 
@@ -10,7 +19,7 @@ Add SwiftFijos to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/intrusive-memory/SwiftFijos", from: "1.1.0")
+    .package(url: "https://github.com/intrusive-memory/SwiftFijos", from: "1.2.0")
 ]
 ```
 
@@ -182,4 +191,4 @@ Discovery order:
 
 ## License
 
-Copyright (c) 2025
+Copyright (c) 2026
