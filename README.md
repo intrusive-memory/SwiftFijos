@@ -1,5 +1,9 @@
 # SwiftFijos
 
+<p align="center">
+    <img src="icon.jpg" alt="SwiftFijos" width="200" />
+</p>
+
 [![Tests](https://github.com/intrusive-memory/SwiftFijos/actions/workflows/tests.yml/badge.svg)](https://github.com/intrusive-memory/SwiftFijos/actions/workflows/tests.yml)
 
 A lightweight Swift package for managing and discovering test fixtures.
