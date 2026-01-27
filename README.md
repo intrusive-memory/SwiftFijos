@@ -19,7 +19,7 @@ Add SwiftFijos to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/intrusive-memory/SwiftFijos", from: "1.1.0")
+    .package(url: "https://github.com/intrusive-memory/SwiftFijos", from: "1.2.0")
 ]
 ```
 
@@ -191,4 +191,4 @@ Discovery order:
 
 ## License
 
-Copyright (c) 2025
+Copyright (c) 2026

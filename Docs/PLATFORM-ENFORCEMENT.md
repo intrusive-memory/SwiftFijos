@@ -103,7 +103,7 @@ To apply this same enforcement to other libraries:
 
 ```bash
 # From your library root directory
-cp /path/to/SwiftSecuencia/.swiftlint.yml .
+cp /path/to/SwiftFijos/.swiftlint.yml .
 ```
 
 **Customize for iOS support** (if needed):
@@ -155,7 +155,7 @@ Add to your `.github/workflows/*.yml`:
 brew install swiftlint
 
 # Copy pre-commit hook
-cp /path/to/SwiftSecuencia/.git/hooks/pre-commit .git/hooks/pre-commit
+cp /path/to/SwiftFijos/.git/hooks/pre-commit .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 ```
 
