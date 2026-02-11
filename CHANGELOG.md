@@ -9,21 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.4.1] - 2026-02-10
+
 ### Added
 
-- **Project Icon** - Added icon.jpg and SwiftFijos.png
+- **AGENTS.md** - Canonical agent documentation covering fixture discovery strategies, thread-safe access patterns, and CI environment support
+- **GEMINI.md** - Simple pointer to AGENTS.md for Gemini agents
 
 ### Changed
 
-- **CI/CD Updates** - Disabled iOS tests
-  - Only macOS unit tests run on PRs
-  - Branch protection updated to match
+- **CLAUDE.md** - Updated to concise quick reference pointing to AGENTS.md
 
+### Previously included (v1.4.0)
+
+- **Project Icon** - Added icon.jpg and SwiftFijos.png
+- **CI/CD Updates** - Disabled iOS tests; only macOS unit tests run on PRs
 - **Platform Enforcement** - Strengthened iOS 26+ / macOS 26+ requirements
-  - Added platform version enforcement documentation
-  - Updated CLAUDE.md with strict version rules
-  - Fixed platform support to macOS/iOS only (removed visionOS, tvOS, watchOS)
-
 - **Code Quality** - Improved .swiftlint.yml maintainability with YAML anchors
 
 ---
