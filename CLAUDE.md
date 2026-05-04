@@ -1,48 +1,24 @@
-# SwiftFijos
+# CLAUDE.md
 
-Test fixture file discovery for Swift packages and Xcode projects.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Platforms**: macOS 26.0+ / iOS 26.0+
+For detailed project documentation, architecture, and development guidelines, see **[AGENTS.md](AGENTS.md)**.
 
-## ⚠️ CRITICAL: Platform Version Enforcement
+## Quick Reference
 
-**This library ONLY supports iOS 26.0+ and macOS 26.0+. NEVER add code that supports older platforms.**
+**Project**: SwiftFijos - Test fixture file discovery for Swift packages and Xcode projects
 
-### Rules for Platform Versions
+**Platforms**: iOS 26.0+, macOS 26.0+
 
-1. **NEVER add `@available` attributes** for versions below iOS 26.0 or macOS 26.0
-   - ❌ WRONG: `@available(iOS 15.0, macOS 12.0, *)`
-   - ✅ CORRECT: No `@available` needed (package enforces iOS 26/macOS 26)
+**Key Components**:
+- Fixture discovery via CI env vars, bundle search, and file system traversal
+- Thread-safe fixture access with `FixtureManager` actor
+- URL caching and preloading for performance
+- Security-scoped resource support (macOS)
+- Access statistics for debugging parallel test execution
 
-2. **NEVER add `#available` runtime checks** for versions below iOS 26.0 or macOS 26.0
-   - ❌ WRONG: `if #available(iOS 15.0, *) { ... }`
-   - ✅ CORRECT: No runtime checks needed (package enforces minimum versions)
-
-3. **Package.swift must always specify iOS 26 and macOS 26**
-   ```swift
-   platforms: [
-       .iOS(.v26),
-       .macOS(.v26)
-   ]
-   ```
-
-**DO NOT lower the platform requirements to support older iOS/macOS versions.**
-
-## Development
-
-```bash
-swift build
-swift test
-```
-
-## Structure
-
-- `Sources/SwiftFijos/Fijos.swift` - Main implementation
-- `Tests/SwiftFijosTests/FijosTests.swift` - Test suite
-- `Fixtures/` - Test fixture files
-
-## Fixture Discovery Priority
-
-1. `CI_PRIMARY_REPOSITORY_PATH` environment variable (Xcode Cloud)
-2. Bundle resource search (for bundled Fixtures directories)
-3. File system traversal upward from `#filePath`
+**Important Notes**:
+- ONLY supports iOS 26.0+ and macOS 26.0+ (NEVER add code for older platforms)
+- Use `FixtureManager` for parallel test execution to prevent race conditions
+- Fixtures directory must be added to "Copy Bundle Resources" for bundled tests
+- See [AGENTS.md](AGENTS.md) for complete API reference, usage patterns, and thread safety details
